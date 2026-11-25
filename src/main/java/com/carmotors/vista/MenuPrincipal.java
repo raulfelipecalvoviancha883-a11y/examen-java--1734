@@ -89,7 +89,7 @@ public class MenuPrincipal {
             System.out.println("2. Gestion de Vehiculos");
             System.out.println("3. Gestion de Proveedores");
             System.out.println("4. Gestion de Inventario y Repuestos");
-            System.out.println("5. Gestion de Servicios y Taller");
+            System.out.println("5. Órdenes de servicio (Gestión de Servicios y Taller)");
             System.out.println("6. Facturacion y Cobros");
             System.out.println("7. Gestion de Catalogos del Sistema");
             System.out.println("0. Salir");

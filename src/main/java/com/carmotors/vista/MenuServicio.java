@@ -14,6 +14,7 @@ import java.util.Scanner;
 public class MenuServicio {
 
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+    private static final DateTimeFormatter FECHA_SEGUNDOS_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     private final ServicioControlador servicioControlador;
     private final Scanner scanner;
@@ -27,7 +28,7 @@ public class MenuServicio {
         int opcion;
         do {
             System.out.println("\n==================================================");
-            System.out.println("   MÓDULO DE GESTIÓN DE SERVICIOS Y TALLER        ");
+            System.out.println("   ÓRDENES DE SERVICIO - GESTIÓN DE TALLER        ");
             System.out.println("==================================================");
             System.out.println("1. Registrar recepción de orden de trabajo");
             System.out.println("2. Listar órdenes de trabajo activas");
@@ -36,6 +37,7 @@ public class MenuServicio {
             System.out.println("5. Marcar orden como finalizada");
             System.out.println("6. Cambiar estado de una orden");
             System.out.println("7. Ver detalle y liquidación de costos de orden");
+            System.out.println("8. Ver Servicios Pendientes por Prioridad");
             System.out.println("0. Volver al menú principal");
             System.out.println("==================================================");
             System.out.print("Seleccione una opción: ");
@@ -56,6 +58,7 @@ public class MenuServicio {
                 case 5 -> ejecutarMarcarFinalizada();
                 case 6 -> ejecutarCambiarEstado();
                 case 7 -> ejecutarVerDetalle();
+                case 8 -> ejecutarListarServiciosPendientesPorPrioridad();
                 case 0 -> System.out.println("Regresando al menú principal...");
                 default -> System.out.println("[Error] Opción no válida. Intente nuevamente.");
             }
@@ -80,7 +83,7 @@ public class MenuServicio {
                 fechaRecepcion = LocalDateTime.parse(fechaInput, FORMATTER);
             }
 
-            System.out.print("Descripción técnica del problema: ");
+            System.out.print("Descripción técnica del problema (inicie con [URGENTE] si es emergencia): ");
             String descripcionProblema = scanner.nextLine().trim();
 
             System.out.print("Costo estimado de mano de obra ($): ");
@@ -117,6 +120,11 @@ public class MenuServicio {
         System.out.println("\n--- TODAS LAS ÓRDENES DE TRABAJO ---");
         List<Servicio> ordenes = servicioControlador.listarOrdenes();
         mostrarTablaOrdenes(ordenes);
+    }
+
+    private void ejecutarListarServiciosPendientesPorPrioridad() {
+        List<Servicio> pendientes = servicioControlador.listarServiciosPendientes();
+        mostrarListaServiciosPendientes(pendientes);
     }
 
     private void ejecutarCargarRepuestos() {
@@ -280,24 +288,59 @@ public class MenuServicio {
         }
     }
 
+    private void mostrarListaServiciosPendientes(List<Servicio> ordenes) {
+        System.out.println("\n        LISTA DE SERVICIOS PENDIENTES");
+        System.out.println("--------------------------------------------------------------------------------");
+        if (ordenes.isEmpty()) {
+            System.out.println("No se encontraron servicios pendientes.");
+            System.out.println("--------------------------------------------------------------------------------");
+            return;
+        }
+
+        System.out.printf("%-4s | %-10s | %-9s | %-19s | %s%n",
+                "ID", "Placa", "Prioridad", "Fecha Recepción", "Problema");
+        System.out.println("--------------------------------------------------------------------------------");
+        for (Servicio s : ordenes) {
+            String placa = (s.getPlaca() != null && !s.getPlaca().isBlank())
+                    ? s.getPlaca()
+                    : "Veh#" + s.getVehiculoId();
+            String prioridad = s.isUrgente() ? "URGENTE" : "Normal";
+            String fecRec = s.getFechaRecepcion() != null
+                    ? s.getFechaRecepcion().format(FECHA_SEGUNDOS_FORMATTER)
+                    : "-";
+            String desc = truncarTexto(s.getDescripcionProblema(), 45);
+            System.out.printf("%-4d | %-10s | %-9s | %-19s | %s%n",
+                    s.getId(), placa, prioridad, fecRec, desc);
+        }
+        System.out.println("--------------------------------------------------------------------------------");
+    }
+
     private void mostrarTablaOrdenes(List<Servicio> ordenes) {
         if (ordenes.isEmpty()) {
             System.out.println("No se encontraron órdenes.");
             return;
         }
 
-        System.out.printf("%-5s | %-10s | %-16s | %-16s | %-12s | %-14s | %s%n",
-                "ID", "Vehículo", "Recepción", "Entrega", "Mano Obra", "Estado", "Problema");
-        System.out.println("-------------------------------------------------------------------------------------------------");
+        System.out.printf("%-5s | %-9s | %-10s | %-16s | %-16s | %-12s | %-14s | %s%n",
+                "ID", "Prioridad", "Vehículo", "Recepción", "Entrega", "Mano Obra", "Estado", "Problema");
+        System.out.println("-----------------------------------------------------------------------------------------------------------");
         for (Servicio s : ordenes) {
+            String prioridad = s.isUrgente() ? "URGENTE" : "Normal";
             String fecRec = s.getFechaRecepcion() != null ? s.getFechaRecepcion().format(FORMATTER) : "-";
             String fecEnt = s.getFechaEntrega() != null ? s.getFechaEntrega().format(FORMATTER) : "Pendiente";
-            String desc = s.getDescripcionProblema() != null ? s.getDescripcionProblema() : "";
-            if (desc.length() > 25) {
-                desc = desc.substring(0, 22) + "...";
-            }
-            System.out.printf("%-5d | %-10d | %-16s | %-16s | $%-11.2f | %-14s | %s%n",
-                    s.getId(), s.getVehiculoId(), fecRec, fecEnt, s.getCostoManoObra(), s.getNombreEstado(), desc);
+            String desc = truncarTexto(s.getDescripcionProblema(), 25);
+            System.out.printf("%-5d | %-9s | %-10d | %-16s | %-16s | $%-11.2f | %-14s | %s%n",
+                    s.getId(), prioridad, s.getVehiculoId(), fecRec, fecEnt, s.getCostoManoObra(), s.getNombreEstado(), desc);
         }
+    }
+
+    private String truncarTexto(String texto, int maxLength) {
+        if (texto == null) {
+            return "";
+        }
+        if (texto.length() <= maxLength) {
+            return texto;
+        }
+        return texto.substring(0, maxLength - 3) + "...";
     }
 }
