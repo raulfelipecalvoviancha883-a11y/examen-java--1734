@@ -9,9 +9,11 @@ public class Servicio {
     public static final int ESTADO_EN_PROCESO = 3;
     public static final int ESTADO_FINALIZADO = 4;
     public static final int ESTADO_CANCELADO = 5;
+    public static final String ETIQUETA_URGENTE = "[URGENTE]";
 
     private Integer id;
     private int vehiculoId;
+    private String placa;
     private int mantenimientoTipoId;
     private LocalDateTime fechaRecepcion;
     private LocalDateTime fechaEntrega;
@@ -101,6 +103,22 @@ public class Servicio {
 
     public void setEstadoId(int estadoId) {
         this.estadoId = estadoId;
+    }
+
+    public String getPlaca() {
+        return placa;
+    }
+
+    public void setPlaca(String placa) {
+        this.placa = placa;
+    }
+
+    /**
+     * Indica si el servicio es urgente según el prefijo "[URGENTE]" en la descripción.
+     */
+    public boolean isUrgente() {
+        return descripcionProblema != null
+                && descripcionProblema.regionMatches(true, 0, ETIQUETA_URGENTE, 0, ETIQUETA_URGENTE.length());
     }
 
     public String getNombreEstado() {

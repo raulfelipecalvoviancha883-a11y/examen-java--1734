@@ -107,4 +107,25 @@ class ServicioControladorTest {
         assertEquals(70.0, servicioControlador.obtenerSubtotalRepuestos(servicioId), 0.001);
         assertEquals(150.0, servicioControlador.obtenerCostoTotal(servicioId), 0.001);
     }
+
+    @Test
+    @DisplayName("Controlador obtiene servicios pendientes priorizados delegando al servicio/DAO")
+    void testListarServiciosPendientes() {
+        Servicio urgente = new Servicio(15, 1, 2, LocalDateTime.of(2025, 9, 8, 9, 0), null,
+                "[URGENTE] El motor no enciende", 120.0, Servicio.ESTADO_RECIBIDO);
+        urgente.setPlaca("ABC-123");
+        Servicio normal = new Servicio(12, 2, 1, LocalDateTime.of(2025, 9, 7, 14, 0), null,
+                "Cambio de aceite", 50.0, Servicio.ESTADO_RECIBIDO);
+        normal.setPlaca("GHI-456");
+
+        when(servicioDao.listarPorEstado(Servicio.ESTADO_RECIBIDO)).thenReturn(List.of(urgente, normal));
+
+        List<Servicio> resultado = servicioControlador.listarServiciosPendientes();
+
+        assertEquals(2, resultado.size());
+        assertTrue(resultado.get(0).isUrgente());
+        assertEquals("ABC-123", resultado.get(0).getPlaca());
+        assertFalse(resultado.get(1).isUrgente());
+        verify(servicioDao, times(1)).listarPorEstado(Servicio.ESTADO_RECIBIDO);
+    }
 }

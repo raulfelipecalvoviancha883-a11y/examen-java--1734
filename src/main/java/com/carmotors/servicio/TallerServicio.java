@@ -159,6 +159,13 @@ public class TallerServicio {
         return servicioDao.listarPorEstado(estadoId);
     }
 
+    /**
+     * Obtiene los servicios en estado pendiente (Recibido) ordenados por prioridad desde el DAO.
+     */
+    public List<Servicio> listarServiciosPendientes() {
+        return servicioDao.listarPorEstado(Servicio.ESTADO_RECIBIDO);
+    }
+
     public List<ServicioRepuesto> listarRepuestosPorServicio(int servicioId) {
         return servicioDao.listarRepuestosPorServicio(servicioId);
     }

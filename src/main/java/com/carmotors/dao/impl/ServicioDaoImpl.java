@@ -86,8 +86,13 @@ public class ServicioDaoImpl implements ServicioDao {
 
     @Override
     public List<Servicio> listarPorEstado(int estadoId) {
-        String sql = "SELECT id, vehiculo_id, mantenimiento_tipo_id, fecha_recepcion, " +
-                "fecha_entrega, descripcion_problema, costo_mano_obra, estado_id FROM servicios WHERE estado_id = ? ORDER BY id DESC";
+        String sql = "SELECT s.id, s.vehiculo_id, v.placa AS vehiculo_placa, s.mantenimiento_tipo_id, " +
+                "s.fecha_recepcion, s.fecha_entrega, s.descripcion_problema, s.costo_mano_obra, s.estado_id " +
+                "FROM servicios s " +
+                "LEFT JOIN vehiculos v ON s.vehiculo_id = v.id " +
+                "WHERE s.estado_id = ? " +
+                "ORDER BY CASE WHEN s.descripcion_problema LIKE '[URGENTE]%' THEN 0 ELSE 1 END, " +
+                "s.fecha_recepcion ASC";
         List<Servicio> servicios = new ArrayList<>();
 
         try (Connection conn = ConexionFactory.getConnection();
@@ -96,7 +101,9 @@ public class ServicioDaoImpl implements ServicioDao {
             stmt.setInt(1, estadoId);
             try (ResultSet rs = stmt.executeQuery()) {
                 while (rs.next()) {
-                    servicios.add(mapearServicio(rs));
+                    Servicio servicio = mapearServicio(rs);
+                    servicio.setPlaca(rs.getString("vehiculo_placa"));
+                    servicios.add(servicio);
                 }
             }
         } catch (SQLException e) {

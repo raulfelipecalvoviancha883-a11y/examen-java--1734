@@ -76,6 +76,10 @@ public class ServicioControlador {
         return tallerServicio.listarOrdenesPorEstado(estadoId);
     }
 
+    public List<Servicio> listarServiciosPendientes() {
+        return tallerServicio.listarServiciosPendientes();
+    }
+
     public List<ServicioRepuesto> listarRepuestosDeOrden(int servicioId) {
         return tallerServicio.listarRepuestosPorServicio(servicioId);
     }
