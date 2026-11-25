@@ -20,6 +20,7 @@ Clases del examen:
 - `src/test/java/com/carmotors/dao/impl/ServicioDaoImplTest.java`
 - `src/test/java/com/carmotors/servicio/TallerServicioTest.java`
 - `src/test/java/com/carmotors/controlador/ServicioControladorTest.java`
+- `src/test/java/com/carmotors/vista/MenuServicioTest.java`
 
 #### Lógica de Priorización en la Cola de Servicios
 Para evitar que reparaciones críticas queden detrás de mantenimientos preventivos rutinarios sin modificar el esquema de la base de datos:

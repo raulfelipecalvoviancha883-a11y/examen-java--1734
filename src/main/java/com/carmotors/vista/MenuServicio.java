@@ -20,8 +20,12 @@ public class MenuServicio {
     private final Scanner scanner;
 
     public MenuServicio(ServicioControlador servicioControlador) {
+        this(servicioControlador, new Scanner(System.in));
+    }
+
+    public MenuServicio(ServicioControlador servicioControlador, Scanner scanner) {
         this.servicioControlador = servicioControlador;
-        this.scanner = new Scanner(System.in);
+        this.scanner = scanner;
     }
 
     public void mostrarMenu() {
