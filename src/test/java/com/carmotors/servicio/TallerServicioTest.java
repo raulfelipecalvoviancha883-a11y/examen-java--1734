@@ -317,4 +317,29 @@ class TallerServicioTest {
         assertFalse(etiquetaEnMedio.isUrgente());
         assertFalse(sinDescripcion.isUrgente());
     }
+
+    @Test
+    @DisplayName("Debe retornar lista vacía sin errores cuando no existen servicios pendientes")
+    void testListarServiciosPendientesListaVacia() {
+        when(servicioDao.listarPorEstado(Servicio.ESTADO_RECIBIDO)).thenReturn(List.of());
+
+        List<Servicio> pendientes = tallerServicio.listarServiciosPendientes();
+
+        assertTrue(pendientes.isEmpty());
+        verify(servicioDao, times(1)).listarPorEstado(Servicio.ESTADO_RECIBIDO);
+    }
+
+    @Test
+    @DisplayName("isUrgente debe evaluar prefijo [URGENTE] sin distinguir mayúsculas y rechazar espacios iniciales o cadenas vacías")
+    void testIsUrgenteCasosBorde() {
+        Servicio minusculas = new Servicio(1, 1, LocalDateTime.now(), null, "[urgente] Fuga grave", 0.0, Servicio.ESTADO_RECIBIDO);
+        Servicio soloEtiqueta = new Servicio(1, 1, LocalDateTime.now(), null, "[URGENTE]", 0.0, Servicio.ESTADO_RECIBIDO);
+        Servicio conEspacioAntes = new Servicio(1, 1, LocalDateTime.now(), null, " [URGENTE] Falla", 0.0, Servicio.ESTADO_RECIBIDO);
+        Servicio vacio = new Servicio(1, 1, LocalDateTime.now(), null, "", 0.0, Servicio.ESTADO_RECIBIDO);
+
+        assertTrue(minusculas.isUrgente());
+        assertTrue(soloEtiqueta.isUrgente());
+        assertFalse(conEspacioAntes.isUrgente());
+        assertFalse(vacio.isUrgente());
+    }
 }

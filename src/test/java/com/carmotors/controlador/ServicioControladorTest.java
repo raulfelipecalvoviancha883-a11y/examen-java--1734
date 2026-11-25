@@ -128,4 +128,16 @@ class ServicioControladorTest {
         assertFalse(resultado.get(1).isUrgente());
         verify(servicioDao, times(1)).listarPorEstado(Servicio.ESTADO_RECIBIDO);
     }
+
+    @Test
+    @DisplayName("Controlador retorna lista vacía cuando no hay servicios pendientes")
+    void testListarServiciosPendientesVacio() {
+        when(servicioDao.listarPorEstado(Servicio.ESTADO_RECIBIDO)).thenReturn(List.of());
+
+        List<Servicio> resultado = servicioControlador.listarServiciosPendientes();
+
+        assertNotNull(resultado);
+        assertTrue(resultado.isEmpty());
+        verify(servicioDao, times(1)).listarPorEstado(Servicio.ESTADO_RECIBIDO);
+    }
 }

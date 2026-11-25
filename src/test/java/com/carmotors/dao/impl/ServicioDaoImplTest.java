@@ -72,4 +72,56 @@ class ServicioDaoImplTest {
             assertTrue(resultado.get(0).isUrgente());
         }
     }
+
+    @Test
+    @DisplayName("listarPorEstado debe preservar el orden devuelto por la BD y tolerar placa nula")
+    void testListarPorEstadoPreservaOrdenYPlacaNula() throws Exception {
+        ServicioDaoImpl dao = new ServicioDaoImpl();
+        LocalDateTime f1 = LocalDateTime.of(2025, 9, 8, 9, 0, 0);
+        LocalDateTime f2 = LocalDateTime.of(2025, 9, 7, 14, 0, 0);
+
+        when(connection.prepareStatement(anyString())).thenReturn(preparedStatement);
+        when(preparedStatement.executeQuery()).thenReturn(resultSet);
+        when(resultSet.next()).thenReturn(true, true, false);
+        when(resultSet.getInt("id")).thenReturn(15, 12);
+        when(resultSet.getInt("vehiculo_id")).thenReturn(3, 4);
+        when(resultSet.getString("vehiculo_placa")).thenReturn("ABC-123", (String) null);
+        when(resultSet.getInt("mantenimiento_tipo_id")).thenReturn(2, 1);
+        when(resultSet.getTimestamp("fecha_recepcion")).thenReturn(Timestamp.valueOf(f1), Timestamp.valueOf(f2));
+        when(resultSet.getTimestamp("fecha_entrega")).thenReturn((Timestamp) null, (Timestamp) null);
+        when(resultSet.getString("descripcion_problema")).thenReturn("[URGENTE] Motor no enciende", "Cambio de aceite");
+        when(resultSet.getDouble("costo_mano_obra")).thenReturn(150.0, 50.0);
+        when(resultSet.getInt("estado_id")).thenReturn(Servicio.ESTADO_RECIBIDO, Servicio.ESTADO_RECIBIDO);
+
+        try (MockedStatic<ConexionFactory> factoryMock = mockStatic(ConexionFactory.class)) {
+            factoryMock.when(ConexionFactory::getConnection).thenReturn(connection);
+
+            List<Servicio> resultado = dao.listarPorEstado(Servicio.ESTADO_RECIBIDO);
+
+            assertEquals(2, resultado.size());
+            assertEquals(15, resultado.get(0).getId());
+            assertTrue(resultado.get(0).isUrgente());
+            assertEquals("ABC-123", resultado.get(0).getPlaca());
+
+            assertEquals(12, resultado.get(1).getId());
+            assertFalse(resultado.get(1).isUrgente());
+            assertNull(resultado.get(1).getPlaca());
+        }
+    }
+
+    @Test
+    @DisplayName("listarPorEstado debe lanzar RuntimeException descriptiva ante SQLException")
+    void testListarPorEstadoLanzaExcepcionSiFallaSql() throws Exception {
+        ServicioDaoImpl dao = new ServicioDaoImpl();
+        when(connection.prepareStatement(anyString())).thenThrow(new java.sql.SQLException("Fallo de conexión"));
+
+        try (MockedStatic<ConexionFactory> factoryMock = mockStatic(ConexionFactory.class)) {
+            factoryMock.when(ConexionFactory::getConnection).thenReturn(connection);
+
+            RuntimeException ex = assertThrows(RuntimeException.class,
+                    () -> dao.listarPorEstado(Servicio.ESTADO_RECIBIDO));
+
+            assertTrue(ex.getMessage().contains("estado: " + Servicio.ESTADO_RECIBIDO));
+        }
+    }
 }
