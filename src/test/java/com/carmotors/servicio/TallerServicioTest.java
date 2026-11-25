@@ -284,4 +284,37 @@ class TallerServicioTest {
         assertTrue(mock.verificarYDescontarStock(10, 35));
         assertEquals(5, mock.getStock(10));
     }
+
+    @Test
+    @DisplayName("Debe delegar listarServiciosPendientes al DAO con estado Recibido preservando el orden del DAO")
+    void testListarServiciosPendientesDelegaAlDao() {
+        LocalDateTime t1 = LocalDateTime.of(2025, 9, 8, 9, 0);
+        LocalDateTime t2 = LocalDateTime.of(2025, 9, 7, 14, 0);
+
+        Servicio urgente = new Servicio(15, 1, 2, t1, null, "[URGENTE] El motor no enciende", 200.0, Servicio.ESTADO_RECIBIDO);
+        Servicio normal = new Servicio(12, 2, 1, t2, null, "Cambio de aceite y filtros", 50.0, Servicio.ESTADO_RECIBIDO);
+
+        when(servicioDao.listarPorEstado(Servicio.ESTADO_RECIBIDO)).thenReturn(List.of(urgente, normal));
+
+        List<Servicio> pendientes = tallerServicio.listarServiciosPendientes();
+
+        assertEquals(2, pendientes.size());
+        assertEquals(15, pendientes.get(0).getId());
+        assertEquals(12, pendientes.get(1).getId());
+        verify(servicioDao, times(1)).listarPorEstado(Servicio.ESTADO_RECIBIDO);
+    }
+
+    @Test
+    @DisplayName("Debe identificar servicio urgente únicamente cuando la descripción comienza con [URGENTE]")
+    void testIdentificacionServicioUrgente() {
+        Servicio urgente = new Servicio(1, 1, LocalDateTime.now(), null, "[URGENTE] Falla total de frenos", 0.0, Servicio.ESTADO_RECIBIDO);
+        Servicio normal = new Servicio(1, 1, LocalDateTime.now(), null, "Alineación y balanceo", 0.0, Servicio.ESTADO_RECIBIDO);
+        Servicio etiquetaEnMedio = new Servicio(1, 1, LocalDateTime.now(), null, "Revisión [URGENTE] después", 0.0, Servicio.ESTADO_RECIBIDO);
+        Servicio sinDescripcion = new Servicio(1, 1, LocalDateTime.now(), null, null, 0.0, Servicio.ESTADO_RECIBIDO);
+
+        assertTrue(urgente.isUrgente());
+        assertFalse(normal.isUrgente());
+        assertFalse(etiquetaEnMedio.isUrgente());
+        assertFalse(sinDescripcion.isUrgente());
+    }
 }
